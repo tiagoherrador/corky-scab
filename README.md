@@ -62,7 +62,7 @@ What I take from it:
 - **It ranks the potatoes reasonably well** (correlation 0.8): more affected potatoes get higher percentages.
 - **The percentage itself is only approximate:** about half of the photos are within 5 points of the reference and three quarters within 10.
 - **It squeezes the scale.** For mildly affected potatoes (reference 5–15 %) it finds too much (16.5 % on average, against 9.8 %); for the most affected ones (30–70 %) it finds too little (32 % against 41 %). The largest misses are photo 66.7 (reference 66.7 %, found 32.7 %), 57.2 (found 36.7 %) and 8.1 (reference 8.1 %, found 25.3 %). For the very severe potatoes the program seems to reach a ceiling around 35–40 %.
-- **Do not take this as a clean test.** The reference is another calculation, not an absolute truth. And four of these photos (3.0, 1.3, 5.4 and 8.1) are the ones I used to tune the recipe, so the agreement is probably a little better than it would be on new photos.
+- **Do not take this as a clean test.** The reference is another calculation, and it is not necessarily more exact than this program: tools such as pliman, or a hand segmentation, can also mark lesions wrongly. A difference between the two does not tell you which one is right. And four of these photos (3.0, 1.3, 5.4 and 8.1) are the ones I used to tune the recipe, so the agreement is probably a little better than it would be on new photos.
 
 ## Is it stable?
 
@@ -71,7 +71,7 @@ I also ran the same 43 photos again, changing things I did not mean to change:
 ![How much the answer moves](assets/stability.png)
 
 - **A different random start for K-Means** barely matters: the percentage of a photo moves by about **0.2 points** (at most 1.4 points).
-- **A different working resolution matters a lot.** I compared three: 400, 600 (the default) and 800 pixels wide. In the right-hand plot each dot is one photo analysed twice: the horizontal axis is its result at 600 px and the vertical axis is its result at 400 or 800 px. **This plot is not "reference versus found"** (that is the previous section): it only compares the same photo measured at different resolutions. The 600 px result is the diagonal itself, so the further a dot is from the dashed line, the more that photo changed. Across the three, the percentage of one photo moves by about **9 points** (up to 40). Compared with the 600 px result, at 800 px the ranking of the potatoes stays almost the same (rank agreement 0.99), but at 400 px it changes more (0.69), and the numbers shift (on average −7 points at 400 px and +3 points at 800 px). Against the reference, 600 px has the lowest average error of the three (6.9 points, against 7.6 at 800 px and 9.3 at 400 px). So the number is tied to the 600 px setting: always analyse every photo the same way, and do not compare with percentages made at another size.
+- **A different working resolution matters a lot.** I compared three: 400, 600 (the default) and 800 pixels wide. In the right-hand plot each dot is one photo analysed twice: the horizontal axis is its result at 600 px and the vertical axis is its result at 400 or 800 px. **This plot is not "reference versus found"** (that is the previous section): it only compares the same photo measured at different resolutions. The 600 px result is the dashed diagonal itself (no change), so the further a dot is from the dashed line, the more that photo changed. Across the three, the percentage of one photo moves by about **9 points** (up to 40). Compared with the 600 px result, at 800 px the ranking of the potatoes stays almost the same (rank agreement 0.99), but at 400 px it changes more (0.69), and the numbers shift (on average −7 points at 400 px and +3 points at 800 px). Against the reference, 600 px has the lowest average error of the three (6.9 points, against 7.6 at 800 px and 9.3 at 400 px). So the number is tied to the 600 px setting: always analyse every photo the same way, and do not compare with percentages made at another size.
 
 ## Known weak spots
 
@@ -82,7 +82,7 @@ I also ran the same 43 photos again, changing things I did not mean to change:
 ## Things to keep in mind
 
 - **A blue background and even light.** The potato is found as "not blue"; with another background the mask will fail.
-- **The reference is another calculation, not an absolute truth,** and a few of those photos were used while I was tuning the recipe, so the agreement with it is probably better than it would be on new photos (see above).
+- **The reference is another calculation, not necessarily the more exact one** (tools such as pliman can also segment wrongly), and a few of those photos were used while I was tuning the recipe, so the agreement with it is probably better than it would be on new photos (see above).
 - **The percentage is relative to the visible surface** in the photo (one side of the potatoes), not to the whole tuber.
 - **Research-grade code:** it prints progress messages with emojis and silences warnings globally.
 
