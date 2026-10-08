@@ -8,7 +8,7 @@ You give it a photo of a potato on a blue background, and it tells you **what pe
 
 Corky scab shows up as rough, darker patches on the skin of the tuber. To compare potatoes (varieties, treatments, batches), someone has to decide *how much* of each tuber is affected, and doing that by eye is slow and changes from person to person, and even from one day to the next.
 
-So I wrote a small tool that turns a photo into a number. It is meant for anyone who needs to **measure the lesion area on many tubers photographed in the same way** (same blue background, similar lighting), for example to compare groups or to rank samples. It is a classical image-analysis tool: it does not need any hand-annotated examples and does not use a neural network, so everything it does can be followed step by step.
+So I wrote a small tool that turns a photo into a number. It is meant for anyone who needs to **measure the lesion area on many tubers photographed in the same way** (same blue background, similar lighting), for example to compare groups or to rank samples. It is a **simple machine-learning tool** (K-Means), not deep learning: it does not need hand-annotated examples and does not use a neural network, so everything it does can be followed step by step.
 
 It is a research and portfolio project, not a validated measuring instrument: see "How well does it agree with the reference?" and "Known weak spots" below.
 
@@ -27,7 +27,18 @@ The idea in one sentence: *separate the potato from the blue background, then so
 5. **Clean up.** The first sorting is noisy, so I remove thin lines and small specks with morphological operations and keep only blobs of a minimum size.
 6. **Count.** Lesion pixels ÷ potato pixels × 100. For the example above: 183,915 pixels of potato and **7.34 %** of lesion.
 
-*Why K-Means and not a neural network?* I had no photos with hand-drawn lesion outlines to train on, and K-Means needs none. It is also fast and easy to explain.
+## A simple model, on purpose
+
+corky-scab is a **simple machine-learning model**. K-Means is *unsupervised*: it finds the two groups of pixels by itself, with no training examples and no labels, and it is not deep learning.
+
+A **neural network** (deep learning) trained on photos with the lesions outlined would probably segment better. It could learn what a corky scab lesion looks like beyond "darker", and avoid mistakes such as the shadow between the two potatoes. I did not use one in this project, and I am not claiming that it would win here, only that it is the natural next step. It would also have costs:
+
+- **Annotated photos.** Someone has to outline the lesions photo by photo, which is slow, and, as with any reference, those outlines can also be inexact.
+- **Computing power.** Training usually needs a GPU, and the tool would be heavier to install and to run.
+- **Less transparency.** With K-Means every step can be followed and fixed; a neural network is harder to explain and to repair when it fails.
+- **Risk with few photos.** With a few dozen photos it can overfit and fail on potatoes that look different (another variety, background or light).
+
+For a first, cheap and explainable measurement, a simple model was a reasonable choice.
 
 ## How I made it
 
