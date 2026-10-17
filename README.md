@@ -1,16 +1,30 @@
 # corky-scab – how much of a potato is covered by corky scab?
 
-You give it a photo of a potato on a blue background, and it tells you **what percentage of the potato's surface is covered by corky scab lesions**, and shows you exactly which parts it counted.
+> **Research and portfolio project — not a validated measuring instrument.** See [Things to keep in mind](#things-to-keep-in-mind).
 
-![The analysis of one photo, step by step](assets/example_output.png)
-
-## Why I built it, and what it is for
+## What this project is
 
 Corky scab shows up as rough, darker patches on the skin of the tuber. To compare potatoes (varieties, treatments, batches), someone has to decide *how much* of each tuber is affected, and doing that by eye is slow and changes from person to person, and even from one day to the next.
 
-So I wrote a small tool that turns a photo into a number. It is meant for anyone who needs to **measure the lesion area on many tubers photographed in the same way** (same blue background, similar lighting), for example to compare groups or to rank samples. It is a **simple machine-learning tool** (K-Means), not deep learning: it does not need hand-annotated examples and does not use a neural network, so everything it does can be followed step by step.
+So I wrote a small tool that turns a photo into a number. You give it a photo of a potato on a blue background, and it tells you **what percentage of the potato's surface is covered by corky scab lesions**, and shows you exactly which parts it counted. It is meant for anyone who needs to **measure the lesion area on many tubers photographed in the same way** (same blue background, similar lighting), for example to compare groups or to rank samples. It is a **simple machine-learning tool** (K-Means), not deep learning: it does not need hand-annotated examples and does not use a neural network, so everything it does can be followed step by step.
 
-It is a research and portfolio project, not a validated measuring instrument: see "How well does it agree with the reference?" and "Known weak spots" below.
+## The short version
+
+I ran it on 43 photos, each with a reference lesion percentage calculated separately.
+
+| Question | What I found |
+|---|---|
+| Does it agree with the reference? | **Well enough to rank potatoes.** Correlation 0.81; the average error is 6.9 percentage points, and about half the photos are within 5 points. |
+| Is the percentage itself exact? | **Only approximately.** It squeezes the scale: too high for mildly affected potatoes (16.5 % against 9.8 %) and too low for the worst ones, with a ceiling around 35–40 %. |
+| Is it stable? | **To the random start, yes** (about 0.2 points). **To the working resolution, no** (about 9 points), so every photo must be analysed at the same size. |
+| Where does it fail? | It counts the shadow between two touching potatoes as lesion, and it always splits a potato into two groups, so it cannot say "no lesions" by itself. |
+| Why not a neural network? | **On purpose:** no annotated photos, no GPU, and every step can be followed. A network is the natural next step, with its own costs. |
+
+## What it gives you
+
+For each photo, the lesion percentage and a figure that shows every step, so you can check what was counted:
+
+![The analysis of one photo, step by step](assets/example_output.png)
 
 ## How it works
 
@@ -27,7 +41,12 @@ The idea in one sentence: *separate the potato from the blue background, then so
 5. **Clean up.** The first sorting is noisy, so I remove thin lines and small specks with morphological operations and keep only blobs of a minimum size.
 6. **Count.** Lesion pixels ÷ potato pixels × 100. For the example above: 183,915 pixels of potato and **7.34 %** of lesion.
 
-## A simple model, on purpose
+## Following the project step by step
+
+<details>
+<summary><b>Show the six steps</b> (why a simple model, how I built it, samples, agreement with the reference, stability, weak spots)</summary>
+
+### 1. A simple model, on purpose
 
 corky-scab is a **simple machine-learning model**. K-Means is *unsupervised*: it finds the two groups of pixels by itself, with no training examples and no labels, and it is not deep learning.
 
@@ -40,13 +59,13 @@ A **neural network** (deep learning) trained on photos with the lesions outlined
 
 For a first, cheap and explainable measurement, a simple model was a reasonable choice.
 
-## How I made it
+### 2. How I made it
 
 The photos are very large (the one above is 9694 × 8747 pixels, about 85 megapixels), so the first thing the tool does is shrink them to 600 pixels wide. All the filter sizes in the code are defined for that size.
 
 I started by cropping a few lesions and a healthy area from one photo and plotting their colour histograms, to see what separates one from the other. Then I tried several versions of the recipe (different smoothing, different features, different numbers of groups) on a handful of photos (3.0, 1.3, 5.4 and 8.1) and kept the one whose red patches matched the lesions I could see by eye. That is the version in this repository: brightness, colour, texture and local contrast as features, strong smoothing, and K-Means with two groups.
 
-## Samples
+### 3. Samples
 
 I ran it on 43 photos. Each photo also has a **reference value**: the lesion percentage that I calculated for it separately (with another tool or by hand, not with this program), which is the number in the photo's file name. These are eight of the photos, from the least to the most lesion area:
 
@@ -54,7 +73,7 @@ I ran it on 43 photos. Each photo also has a **reference value**: the lesion per
 
 Over the 43 photos the reference goes from 0 % to 66.7 %, and the program found between 1.1 % and 39.6 %.
 
-## How well does it agree with the reference?
+### 4. How well does it agree with the reference?
 
 I compared the percentage found by the program with the reference value of each of the 43 photos. I checked in the lesion masks of my slides that the number in the file name is indeed the lesion share of the potato in 40 of the 43 photos. In the other three (the most severe, 41.3, 57.2 and 66.7) I could not confirm it, so I kept the file-name value for all 43 and also give the numbers without those three.
 
@@ -75,29 +94,31 @@ What I take from it:
 - **It squeezes the scale.** For mildly affected potatoes (reference 5–15 %) it finds too much (16.5 % on average, against 9.8 %); for the most affected ones (30–70 %) it finds too little (32 % against 41 %). The largest misses are photo 66.7 (reference 66.7 %, found 32.7 %), 57.2 (found 36.7 %) and 8.1 (reference 8.1 %, found 25.3 %). For the very severe potatoes the program seems to reach a ceiling around 35–40 %.
 - **Do not take this as a clean test.** The reference is another calculation, and it is not necessarily more exact than this program: tools such as pliman, or a hand segmentation, can also mark lesions wrongly. A difference between the two does not tell you which one is right. And four of these photos (3.0, 1.3, 5.4 and 8.1) are the ones I used to tune the recipe, so the agreement is probably a little better than it would be on new photos.
 
-## Is it stable?
+### 5. Is it stable?
 
 I also ran the same 43 photos again, changing things I did not mean to change:
 
 ![How much the answer moves](assets/stability.png)
 
 - **A different random start for K-Means** barely matters: the percentage of a photo moves by about **0.2 points** (at most 1.4 points).
-- **A different working resolution matters a lot.** I compared three: 400, 600 (the default) and 800 pixels wide. In the right-hand plot each dot is one photo analysed twice: the horizontal axis is its result at 600 px and the vertical axis is its result at 400 or 800 px. **This plot is not "reference versus found"** (that is the previous section): it only compares the same photo measured at different resolutions. The 600 px result is the dashed diagonal itself (no change), so the further a dot is from the dashed line, the more that photo changed. Across the three, the percentage of one photo moves by about **9 points** (up to 40). Compared with the 600 px result, at 800 px the ranking of the potatoes stays almost the same (rank agreement 0.99), but at 400 px it changes more (0.69), and the numbers shift (on average −7 points at 400 px and +3 points at 800 px). Against the reference, 600 px has the lowest average error of the three (6.9 points, against 7.6 at 800 px and 9.3 at 400 px). So the number is tied to the 600 px setting: always analyse every photo the same way, and do not compare with percentages made at another size.
+- **A different working resolution matters a lot.** I compared three: 400, 600 (the default) and 800 pixels wide. In the right-hand plot each dot is one photo analysed twice: the horizontal axis is its result at 600 px and the vertical axis is its result at 400 or 800 px. **This plot is not "reference versus found"** (that is step 4): it only compares the same photo measured at different resolutions. The 600 px result is the dashed diagonal itself (no change), so the further a dot is from the dashed line, the more that photo changed. Across the three, the percentage of one photo moves by about **9 points** (up to 40). Compared with the 600 px result, at 800 px the ranking of the potatoes stays almost the same (rank agreement 0.99), but at 400 px it changes more (0.69), and the numbers shift (on average −7 points at 400 px and +3 points at 800 px). Against the reference, 600 px has the lowest average error of the three (6.9 points, against 7.6 at 800 px and 9.3 at 400 px). So the number is tied to the 600 px setting: always analyse every photo the same way, and do not compare with percentages made at another size.
 
-## Known weak spots
+### 6. Known weak spots
 
-- **By eye,** the red patches follow the dark rough spots well in the photos I looked at (see the samples above).
+- **By eye,** the red patches follow the dark rough spots well in the photos I looked at (see the samples in step 3).
 - **A known false alarm:** in most of the photos shown above, the narrow dark strip where the two potatoes touch (a shadow) is marked as lesion. It adds a little to the total.
 - **It always makes two piles.** K-Means splits any potato in two, whether it has lesions or not. In a test with an artificial, perfectly lesion-free potato (with a little noise added) it reported 94.5 % lesions; in the same test with painted lesions covering 12.1 % it reported 14.7 %. Real photos behave better than this artificial one, but it shows that the method cannot say "there are no lesions" by itself.
+
+</details>
 
 ## Things to keep in mind
 
 - **A blue background and even light.** The potato is found as "not blue"; with another background the mask will fail.
-- **The reference is another calculation, not necessarily the more exact one** (tools such as pliman can also segment wrongly), and a few of those photos were used while I was tuning the recipe, so the agreement with it is probably better than it would be on new photos (see above).
+- **The reference is another calculation, not necessarily the more exact one** (tools such as pliman can also segment wrongly), and a few of those photos were used while I was tuning the recipe, so the agreement with it is probably better than it would be on new photos (see step 4).
 - **The percentage is relative to the visible surface** in the photo (one side of the potatoes), not to the whole tuber.
 - **Research-grade code:** it prints progress messages with emojis and silences warnings globally.
 
-## Install and use
+## Try it yourself
 
 ```bash
 pip install .
